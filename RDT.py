@@ -92,23 +92,44 @@ class RDT:
         if(self.seq_num >= 2):
             self.seq_num = 0
         # Send the packet.
+        print("I'm sending a packet! SEQ: ")
+        print(self.seq_num)
         p = Packet(self.seq_num, msg_S)
         self.network.udt_send(p.get_byte_S())
+        byte_buffer = ''
+        print("I should have sent my packet!")
         while True:
             # Wait for ACK or NAK0
-            raw = self.network.udt_receive()
-            if Packet.corrupt(raw):
+            print("I'm waiting patiently for an ACK or NAK.")
+            byte_buffer += self.network.udt_receive()
+            while(True):
+                # check if we have received enough bytes
+                if (len(byte_buffer) < Packet.length_S_length):
+                    pass  # not enough bytes to read packet length
+                # extract length of packet
+                length = int(byte_buffer[:Packet.length_S_length])
+                if len(byte_buffer) < length:
+                    pass  # not enough bytes to read the whole packet
+                break
+            print("I got a response!")
+            if Packet.corrupt(byte_buffer):
                 # Packet was corrupt. Resend.
+                print("It was corrupt :( Sending it again.")
                 self.network.udt_send(p.get_byte_S())
             else:
                 # Got a message
-                ack = Packet.from_byte_S(self.network.udt_receive())
+                print("I'm pulling the data from that response.")
+                ack = Packet.from_byte_S( byte_buffer)
+
                 if ack.msg_S == 'ACK' and ack.seq_num == self.seq_num:
+                    print("I got a cool ACK.")
                     # Got an ACK
                     break
                 else:
                     # Got a NAK
+                    print("I don't think she got the right message...")
                     self.network.udt_send(p.get_byte_S())
+        byte_buffer = byte_buffer[int(self.byte_buffer[:Packet.length_S_length]):]
         self.seq_num += 1
 
     def rdt_2_1_receive(self):
