@@ -140,6 +140,7 @@ class RDT:
         self.byte_buffer += byte_S
         #keep extracting packets - if reordered, could get more than one
         while True:
+            print("receiving packet")
             #check if we have received enough bytes
             if(len(self.byte_buffer) < Packet.length_S_length):
                 return ret_S #not enough bytes to read packet length
@@ -149,21 +150,30 @@ class RDT:
                 return ret_S #not enough bytes to read the whole packet
             #create packet from buffer content and add to return string
             if Packet.corrupt(byte_S):
+                print("Sending NAK ")
+                print(self.seq_num)
                 nak = Packet(self.seq_num, 'NAK')
+                print("Should have sent NAK")
                 self.network.udt_send(nak.get_byte_S())
             else:
                 p = Packet.from_byte_S(self.byte_buffer[0:length])
                 if p.seq_num == self.seq_num:
+                    print("Sending ACK ")
+                    print(self.seq_num)
                     ack = Packet(self.seq_num, 'ACK')
                     self.network.udt_send(ack.get_byte_S())
+                    print("Should have sent ACK")
                     ret_S = p.msg_S if (ret_S is None) else ret_S + p.msg_S
                     #remove the packet bytes from the buffer
                     self.byte_buffer = self.byte_buffer[length:]
                     #if this was the last packet, will return on the next iteration
                     self.seq_num += 1
                 else:
+                    print('Sending ACK')
                     ack = Packet(self.seq_num, 'ACK')
+                    print(self.seq_num)
                     self.network.udt_send(ack.get_byte_S())
+                    print("Should have sent ACK ")
     
     def rdt_3_0_send(self, msg_S):
         pass
