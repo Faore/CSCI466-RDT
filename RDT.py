@@ -9,7 +9,7 @@ class Packet:
     seq_num_S_length = 10
     length_S_length = 10
     ## length of md5 checksum in hex
-    checksum_length = 32 
+    checksum_length = 32
         
     def __init__(self, seq_num, msg_S):
         self.seq_num = seq_num
@@ -23,8 +23,7 @@ class Packet:
         seq_num = int(byte_S[Packet.length_S_length : Packet.length_S_length+Packet.seq_num_S_length])
         msg_S = byte_S[Packet.length_S_length+Packet.seq_num_S_length+Packet.checksum_length :]
         return self(seq_num, msg_S)
-        
-        
+
     def get_byte_S(self):
         #convert sequence number of a byte field of seq_num_S_length bytes
         seq_num_S = str(self.seq_num).zfill(self.seq_num_S_length)
@@ -50,7 +49,6 @@ class Packet:
         computed_checksum_S = checksum.hexdigest()
         #and check if the same
         return checksum_S != computed_checksum_S
-        
 
 class RDT:
     ## latest sequence number used in a packet
@@ -91,9 +89,28 @@ class RDT:
             
     
     def rdt_2_1_send(self, msg_S):
-        if args.role == 'client':
+        if(self.seq_num >= 2):
+            self.seq_num = 0
+        # Send the packet.
+        p = Packet(self.seq_num, msg_S)
+        self.network.udt_send(p.get_byte_S())
+        while True:
+            # Wait for ACK or NAK0
+            raw = self.network.udt_receive()
+            if Packet.corrupt(raw):
+                # Packet was corrupt. Resend.
+                self.network.udt_send(p.get_byte_S())
+            else:
+                # Got a message
+                ack = Packet.from_byte_S(self.network.udt_receive())
+                if ack.msg_S == 'ACK' and ack.seq_num == self.seq_num:
+                    # Got an ACK
+                    break
+                else:
+                    # Got a NAK
+                    self.network.udt_send(p.get_byte_S())
+        self.seq_num += 1
 
-        else:
     def rdt_2_1_receive(self):
         pass
     
