@@ -54,7 +54,8 @@ class RDT:
     ## latest sequence number used in a packet
     seq_num = 1
     ## buffer of bytes read from network
-    byte_buffer = '' 
+    byte_buffer = ''
+    ack_buffer = ''
 
     def __init__(self, role_S, server_S, port):
         self.network = Network.NetworkLayer(role_S, server_S, port)
@@ -96,30 +97,34 @@ class RDT:
         print(self.seq_num)
         p = Packet(self.seq_num, msg_S)
         self.network.udt_send(p.get_byte_S())
-        byte_buffer = ''
         print("I should have sent my packet!")
         while True:
             # Wait for ACK or NAK0
             print("I'm waiting patiently for an ACK or NAK.")
-            byte_buffer += self.network.udt_receive()
+            self.ack_buffer += self.network.udt_receive()
             while(True):
                 # check if we have received enough bytes
-                if (len(byte_buffer) < Packet.length_S_length):
+                if (len(self.ack_buffer) >= Packet.length_S_length):
+                    # extract length of packet
+                    length = int(self.ack_buffer[:Packet.length_S_length])
+                    if len(self.ack_buffer) >= length:
+                        break
+                    else:
+                        pass # not enough bytes to read the whole packet
+                else:
                     pass  # not enough bytes to read packet length
-                # extract length of packet
-                length = int(byte_buffer[:Packet.length_S_length])
-                if len(byte_buffer) < length:
+                if len(self.ack_buffer) < length:
                     pass  # not enough bytes to read the whole packet
                 break
             print("I got a response!")
-            if Packet.corrupt(byte_buffer):
+            if Packet.corrupt(self.ack_buffer):
                 # Packet was corrupt. Resend.
                 print("It was corrupt :( Sending it again.")
                 self.network.udt_send(p.get_byte_S())
             else:
                 # Got a message
                 print("I'm pulling the data from that response.")
-                ack = Packet.from_byte_S( byte_buffer)
+                ack = Packet.from_byte_S(self.ack_buffer)
 
                 if ack.msg_S == 'ACK' and ack.seq_num == self.seq_num:
                     print("I got a cool ACK.")
@@ -129,7 +134,7 @@ class RDT:
                     # Got a NAK
                     print("I don't think she got the right message...")
                     self.network.udt_send(p.get_byte_S())
-        byte_buffer = byte_buffer[int(self.byte_buffer[:Packet.length_S_length]):]
+        self.ack_buffer = self.ack_buffer[int(self.ack_buffer[:Packet.length_S_length]):]
         self.seq_num += 1
 
     def rdt_2_1_receive(self):
