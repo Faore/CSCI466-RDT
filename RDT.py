@@ -101,10 +101,11 @@ class RDT:
             # Wait for ACK or NAK0
             print("\tWaiting for Response")
             self.ack_buffer += self.network.udt_receive()
+            # Wait for a full packet.
             while(True):
                 self.ack_buffer += self.network.udt_receive()
                 # check if we have received enough bytes
-                if (len(self.ack_buffer) >= Packet.length_S_length):
+                if (len(self.ack_buffer) > Packet.length_S_length):
                     # extract length of packet
                     length = int(self.ack_buffer[:Packet.length_S_length])
                     if len(self.ack_buffer) >= length:
@@ -129,10 +130,15 @@ class RDT:
                     # Got an ACK
                     break
                 else:
-                    # Got a NAK
-                    print("\t\tRecieved NAK. Resending packet.")
-                    self.network.udt_send(p.get_byte_S())
-                    self.ack_buffer = self.ack_buffer[int(self.ack_buffer[:Packet.length_S_length]):]
+                    if ack.msg_S == 'NAK':
+                        # Got a NAK
+                        print("\t\tRecieved NAK. Resending packet.")
+                        self.network.udt_send(p.get_byte_S())
+                        self.ack_buffer = self.ack_buffer[int(self.ack_buffer[:Packet.length_S_length]):]
+                    else:
+                        print('Got something other than a NAK')
+                        self.ack_buffer = self.ack_buffer[int(self.ack_buffer[:Packet.length_S_length]):]
+                        return
         self.seq_num += 1
 
     def rdt_2_1_receive(self):
