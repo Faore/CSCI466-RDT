@@ -120,6 +120,7 @@ class RDT:
                 # Packet was corrupt. Resend.
                 print("It was corrupt :( Sending it again.")
                 self.network.udt_send(p.get_byte_S())
+                self.ack_buffer = self.ack_buffer[int(self.ack_buffer[:Packet.length_S_length]):]
             else:
                 # Got a message
                 print("I'm pulling the data from that response.")
@@ -127,13 +128,14 @@ class RDT:
 
                 if ack.msg_S == 'ACK' and ack.seq_num == self.seq_num:
                     print("I got a cool ACK.")
+                    self.ack_buffer = self.ack_buffer[int(self.ack_buffer[:Packet.length_S_length]):]
                     # Got an ACK
                     break
                 else:
                     # Got a NAK
                     print("I don't think she got the right message...")
                     self.network.udt_send(p.get_byte_S())
-        self.ack_buffer = self.ack_buffer[int(self.ack_buffer[:Packet.length_S_length]):]
+                    self.ack_buffer = self.ack_buffer[int(self.ack_buffer[:Packet.length_S_length]):]
         self.seq_num += 1
 
     def rdt_2_1_receive(self):
