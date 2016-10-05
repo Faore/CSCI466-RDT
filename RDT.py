@@ -93,14 +93,13 @@ class RDT:
         if(self.seq_num >= 2):
             self.seq_num = 0
         # Send the packet.
-        print("I'm sending a packet! SEQ: ")
+        print("Sending packet SEQ: ")
         print(self.seq_num)
         p = Packet(self.seq_num, msg_S)
         self.network.udt_send(p.get_byte_S())
-        print("I should have sent my packet!")
         while True:
             # Wait for ACK or NAK0
-            print("I'm waiting patiently for an ACK or NAK.")
+            print("\tWaiting for Response")
             self.ack_buffer += self.network.udt_receive()
             while(True):
                 self.ack_buffer += self.network.udt_receive()
@@ -115,25 +114,23 @@ class RDT:
                 else:
                     pass  # not enough bytes to read packet length
 
-            print("I got a response!")
             if Packet.corrupt(self.ack_buffer):
                 # Packet was corrupt. Resend.
-                print("It was corrupt :( Sending it again.")
+                print("Corrupt Response. Resending.")
                 self.network.udt_send(p.get_byte_S())
                 self.ack_buffer = self.ack_buffer[int(self.ack_buffer[:Packet.length_S_length]):]
             else:
                 # Got a message
-                print("I'm pulling the data from that response.")
                 ack = Packet.from_byte_S(self.ack_buffer)
 
                 if ack.msg_S == 'ACK' and ack.seq_num == self.seq_num:
-                    print("I got a cool ACK.")
+                    print("Recieved ACK. Packet sent.")
                     self.ack_buffer = self.ack_buffer[int(self.ack_buffer[:Packet.length_S_length]):]
                     # Got an ACK
                     break
                 else:
                     # Got a NAK
-                    print("I don't think she got the right message...")
+                    print("Recieved NAK. Resending packet.")
                     self.network.udt_send(p.get_byte_S())
                     self.ack_buffer = self.ack_buffer[int(self.ack_buffer[:Packet.length_S_length]):]
         self.seq_num += 1
