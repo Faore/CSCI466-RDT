@@ -144,7 +144,6 @@ class RDT:
         self.byte_buffer += byte_S
         #keep extracting packets - if reordered, could get more than one
         while True:
-            print("receiving packet")
             #check if we have received enough bytes
             if(len(self.byte_buffer) < Packet.length_S_length):
                 return ret_S #not enough bytes to read packet length
@@ -153,6 +152,7 @@ class RDT:
             if len(self.byte_buffer) < length:
                 return ret_S #not enough bytes to read the whole packet
             #create packet from buffer content and add to return string
+            print("received full packet")
             if Packet.corrupt(byte_S):
                 print("Sending NAK ")
                 print(self.seq_num)
