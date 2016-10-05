@@ -161,6 +161,8 @@ class RDT:
                 nak = Packet(self.seq_num, 'NAK')
                 print("Should have sent NAK")
                 self.network.udt_send(nak.get_byte_S())
+                #remove the packet bytes from the buffer
+                self.byte_buffer = self.byte_buffer[length:]
             else:
                 p = Packet.from_byte_S(self.byte_buffer[0:length])
                 if p.seq_num == self.seq_num:
@@ -180,6 +182,8 @@ class RDT:
                     print(self.seq_num)
                     self.network.udt_send(ack.get_byte_S())
                     print("Should have sent ACK ")
+                    #remove the packet bytes from the buffer
+                    self.byte_buffer = self.byte_buffer[length:]
     
     def rdt_3_0_send(self, msg_S):
         pass
