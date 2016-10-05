@@ -103,6 +103,7 @@ class RDT:
             print("I'm waiting patiently for an ACK or NAK.")
             self.ack_buffer += self.network.udt_receive()
             while(True):
+                self.ack_buffer += self.network.udt_receive()
                 # check if we have received enough bytes
                 if (len(self.ack_buffer) >= Packet.length_S_length):
                     # extract length of packet
