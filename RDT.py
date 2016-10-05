@@ -113,9 +113,7 @@ class RDT:
                         pass # not enough bytes to read the whole packet
                 else:
                     pass  # not enough bytes to read packet length
-                if len(self.ack_buffer) < length:
-                    pass  # not enough bytes to read the whole packet
-                break
+
             print("I got a response!")
             if Packet.corrupt(self.ack_buffer):
                 # Packet was corrupt. Resend.
