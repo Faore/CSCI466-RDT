@@ -137,7 +137,10 @@ class RDT:
                         self.ack_buffer = self.ack_buffer[int(self.ack_buffer[:Packet.length_S_length]):]
                     else:
                         print('\t\tSENDER: Got something other than a NAK; Duplicate Message from Receive. Resending ACK, then new data.')
-                        ack = Packet(self.seq_num, 'ACK')
+                        if self.seq_num == 1:
+                            ack = Packet(0, 'ACK')
+                        else:
+                            ack = Packet(1, 'ACK')
                         self.network.udt_send(ack.get_byte_S())
                         self.ack_buffer = self.ack_buffer[int(self.ack_buffer[:Packet.length_S_length]):]
                         self.network.udt_send(p.get_byte_S())
