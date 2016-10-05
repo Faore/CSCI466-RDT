@@ -184,7 +184,10 @@ class RDT:
                     self.seq_num += 1
                 else:
                     print('RECEIVER: Duplicate packet. Resending ACK')
-                    ack = Packet(self.seq_num, 'ACK')
+                    if self.seq_num == 1:
+                        ack = Packet(0, 'ACK')
+                    else:
+                        ack = Packet(1, 'ACK')
                     print(self.seq_num)
                     self.network.udt_send(ack.get_byte_S())
                     #remove the packet bytes from the buffer
