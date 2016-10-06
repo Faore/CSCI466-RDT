@@ -94,7 +94,7 @@ class RDT:
             self.seq_num = 0
 
     def oppositeSeq(self):
-        if(self.seq_num == 1)
+        if self.seq_num == 1:
             return 0
         else:
             return 1
