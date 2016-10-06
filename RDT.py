@@ -174,14 +174,20 @@ class RDT:
                 print("\tSent NAK\n")
             else:
                 p = Packet.from_byte_S(self.byte_buffer[0:length])
-                ret_S = p.msg_S if (ret_S is None) else ret_S + p.msg_S
-                print("RECIEVER: Packet Recieved")
-                # remove the packet bytes from the buffer
                 self.byte_buffer = self.byte_buffer[length:]
-                ack = Packet(p.seq_num, 'ACK')
-                self.network.udt_send(ack.get_byte_S())
-                print("\tSent ACK" + repr(self.seq_num) + "\n")
-                # if this was the last packet, will return on the next iteration
+                if p.seq_num == self.seq_num and p.msg_S != 'ACK' and p.msg_S != 'NAK':
+                    print("RECEIVER: Packet " + repr(p.seq_num) + " Recieved")
+                    ret_S = p.msg_S if (ret_S is None) else ret_S + p.msg_S
+                    # remove the packet bytes from the buffer
+                    ack = Packet(p.seq_num, 'ACK')
+                    self.network.udt_send(ack.get_byte_S())
+                    print("\tSent ACK" + repr(self.seq_num) + "\n")
+                else:
+                    if p.seq_num == self.oppositeSeq() and p.msg_S == 'ACK':
+                        print('\tReceived a previous ACK' + p.seq_num + '. Ignoring.')
+                    else:
+                        print('\tReceived a previous NAK. I dunno what to do.')
+                    # if this was the last packet, will return on the next iteration
 
     def rdt_3_0_send(self, msg_S):
         pass
