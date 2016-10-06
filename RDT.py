@@ -2,7 +2,7 @@ import Network
 import argparse
 from time import sleep
 import hashlib
-
+import time
 
 class Packet:
     ## the number of bytes used to store packet length
@@ -55,7 +55,7 @@ class RDT:
     seq_num = 1
     ## buffer of bytes read from network
     byte_buffer = ''
-    ack_buffer = ''
+    byte_buffer = ''
 
     def __init__(self, role_S, server_S, port):
         self.network = Network.NetworkLayer(role_S, server_S, port)
@@ -93,56 +93,66 @@ class RDT:
         if(self.seq_num >= 2):
             self.seq_num = 0
         # Send the packet.
-        print("SENDER: Sending packet SEQ: ")
-        print(self.seq_num)
+        print("SENDER: Sending packet with Sequence Number: " + repr(self.seq_num))
         p = Packet(self.seq_num, msg_S)
         self.network.udt_send(p.get_byte_S())
         while True:
-            # Wait for ACK or NAK0
+            # Wait for ACK or NAK
             print("\tSENDER: Waiting for Response")
-            self.ack_buffer += self.network.udt_receive()
+            self.byte_buffer += self.network.udt_receive()
             # Wait for a full packet.
             while(True):
-                self.ack_buffer += self.network.udt_receive()
+                self.byte_buffer += self.network.udt_receive()
                 # check if we have received enough bytes
-                if (len(self.ack_buffer) > Packet.length_S_length):
+                if (len(self.byte_buffer) >= Packet.length_S_length):
                     # extract length of packet
-                    length = int(self.ack_buffer[:Packet.length_S_length])
-                    if len(self.ack_buffer) >= length:
+                    try:
+                        length = int(self.byte_buffer[:Packet.length_S_length])
+                    except(ValueError):
+                        print('SENDER: Received a Corrupt Packet Length. Clearing buffer and resending packet.')
+                        time.sleep(2)
+                        # Have to empty buffer and resend.
+                        self.byte_buffer = ''
+                        self.network.udt_send(p.get_byte_S())
+                        break
+                        
+                        
+                    if len(self.byte_buffer) >= length:
                         break
                     else:
                         pass # not enough bytes to read the whole packet
                 else:
                     pass  # not enough bytes to read packet length
-
-            if Packet.corrupt(self.ack_buffer):
+            # A full packet has arrived.
+            if Packet.corrupt(self.byte_buffer):
                 # Packet was corrupt. Resend.
-                print("\t\tSENDER: Corrupt Response. Resending.")
+                print("\t\tSENDER: Corrupt Response. Clearing buffer. Resending.")
+                time.sleep(2)
+                self.byte_buffer = ''
                 self.network.udt_send(p.get_byte_S())
-                self.ack_buffer = self.ack_buffer[int(self.ack_buffer[:Packet.length_S_length]):]
             else:
                 # Got a message
-                ack = Packet.from_byte_S(self.ack_buffer)
+                ack = Packet.from_byte_S(self.byte_buffer)
 
                 if ack.msg_S == 'ACK' and ack.seq_num == self.seq_num:
-                    print("\t\tSENDER: Recieved ACK. Packet sent.")
-                    self.ack_buffer = self.ack_buffer[int(self.ack_buffer[:Packet.length_S_length]):]
+                    print("\t\tSENDER: Recieved ACK" + repr(ack.seq_num) + ". Packet sent.")
+                    self.byte_buffer = self.byte_buffer[int(self.byte_buffer[:Packet.length_S_length]):]
                     # Got an ACK
                     break
                 else:
-                    if ack.msg_S == 'NAK':
+                    if ack.msg_S == 'NAK' and ack.seq_num == self.seq_num:
                         # Got a NAK
                         print("\t\tSENDER: Recieved NAK. Resending packet.")
                         self.network.udt_send(p.get_byte_S())
-                        self.ack_buffer = self.ack_buffer[int(self.ack_buffer[:Packet.length_S_length]):]
+                        self.byte_buffer = self.byte_buffer[int(self.byte_buffer[:Packet.length_S_length]):]
+                    elif ack.msg_S == 'NAK' and ack.seq_num != self.seq_num:
+                        print("GOT AN NAK FOR ANOTHER PACKET. Everything is just broken.")
                     else:
                         print('\t\tSENDER: Got something other than a NAK; Duplicate Message from Receive. Resending ACK, then new data.')
-                        if self.seq_num == 1:
-                            ack = Packet(0, 'ACK')
-                        else:
-                            ack = Packet(1, 'ACK')
-                        self.network.udt_send(ack.get_byte_S())
-                        self.ack_buffer = self.ack_buffer[int(self.ack_buffer[:Packet.length_S_length]):]
+                        oldack = Packet(ack.seq_num, 'ACK')
+                        self.network.udt_send(oldack.get_byte_S())
+                        self.byte_buffer = self.byte_buffer[int(self.byte_buffer[:Packet.length_S_length]):]
+                        time.sleep(1)
                         self.network.udt_send(p.get_byte_S())
         self.seq_num += 1
 
@@ -158,18 +168,26 @@ class RDT:
             if(len(self.byte_buffer) <= Packet.length_S_length):
                 return ret_S #not enough bytes to read packet length
             #extract length of packet
-            length = int(self.byte_buffer[:Packet.length_S_length])
+            try:
+                length = int(self.byte_buffer[:Packet.length_S_length])
+            except(ValueError):
+                print('RECEIVER: Received a Corrupt Packet Length')
+                # Have to empty buffer
+                time.sleep(2)
+                self.byte_buffer = ''
+                self.network.udt_send(Packet(self.seq_num, 'NAK').get_byte_S())
             if len(self.byte_buffer) < length:
                 return ret_S #not enough bytes to read the whole packet
             #create packet from buffer content and add to return string
             print("RECEIVER: Receiving Packet:")
             if Packet.corrupt(byte_S):
-                print("\tRECEIVER: Packet Corrupted, Sending NAK")
+                print("\tRECEIVER: Packet Corrupted, Clearing buffer, Sending NAK")
                 print(self.seq_num)
+                time.sleep(2)
+                self.byte_buffer = ''
                 nak = Packet(self.seq_num, 'NAK')
                 self.network.udt_send(nak.get_byte_S())
-                #remove the packet bytes from the buffer
-                self.byte_buffer = self.byte_buffer[length:]
+
             else:
                 p = Packet.from_byte_S(self.byte_buffer[0:length])
                 if p.seq_num == self.seq_num:
@@ -184,11 +202,7 @@ class RDT:
                     self.seq_num += 1
                 else:
                     print('RECEIVER: Duplicate packet. Resending ACK')
-                    if self.seq_num == 1:
-                        ack = Packet(0, 'ACK')
-                    else:
-                        ack = Packet(1, 'ACK')
-                    print(self.seq_num)
+                    ack = Packet(p.seq_num, 'ACK')
                     self.network.udt_send(ack.get_byte_S())
                     #remove the packet bytes from the buffer
                     self.byte_buffer = self.byte_buffer[length:]
