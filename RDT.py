@@ -184,15 +184,15 @@ class RDT:
                     print("\tSent ACK" + repr(self.seq_num) + "\n")
                 else:
                     if p.seq_num == self.oppositeSeq() and p.msg_S == 'ACK':
-                        print('\tReceived a previous ACK' + p.seq_num + '. Ignoring.')
+                        print('\tReceived a previous ACK' + repr(p.seq_num) + '. Ignoring.')
                     else:
                         if p.seq_num == self.seq_num and p.msg_S == 'ACK':
-                            print('\tReceived a out-of-sync ACK' + p.seq_num + '. I dunno what to do.')
+                            print('\tReceived a out-of-sync ACK' + repr(p.seq_num) + '. I dunno what to do.')
                         else:
                             if p.seq_num == self.seq_num and p.msg_S == 'NAK':
-                                print('\tReceived a out-of-sync ACK' + p.seq_num + '. I dunno what to do.')
+                                print('\tReceived a out-of-sync ACK' + repr(p.seq_num) + '. I dunno what to do.')
                             else:
-                                print('\tReceived a previous NAK' + p.seq_num + '. I dunno what to do.')
+                                print('\tReceived a previous NAK' + repr(p.seq_num) + '. I dunno what to do.')
 
                     # if this was the last packet, will return on the next iteration
 
