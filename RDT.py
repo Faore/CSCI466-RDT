@@ -92,7 +92,13 @@ class RDT:
             self.seq_num = 1
         else:
             self.seq_num = 0
-    
+
+    def oppositeSeq(self):
+        if(self.seq_num == 1)
+            return 0
+        else:
+            return 1
+
     def rdt_2_1_send(self, msg_S):
         # Send the packet
         p = Packet(self.seq_num, msg_S)
@@ -130,7 +136,14 @@ class RDT:
                                 print("\tRecieved NAK" + repr(response.seq_num))
                                 self.network.udt_send(p.get_byte_S())
                             else:
-                                print("\tDidn't get an ACK or NAK.")
+                                if(response.seq_num == self.oppositeSeq() and (response.msg_S != 'ACK' and response.msg_S != 'NAK')):
+                                    print('\tRecieved extra data from previously received packet. Resending ACK.')
+                                    self.network.udt_send(Packet(response.seq_num, 'ACK'))
+                                else:
+                                    if(response.seq_num == self.oppositeSeq() and (response.msg_S == 'ACK')):
+                                        print('\tRecieved duplicate ACK. Ignoring.')
+                                    else:
+                                        print('\tRecieved previous NAK. I dunno what to do anymore.')
                 else:
                     # not enough bytes to read the whole packet
                     pass
