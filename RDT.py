@@ -138,7 +138,7 @@ class RDT:
                             else:
                                 if(response.seq_num == self.oppositeSeq() and (response.msg_S != 'ACK' and response.msg_S != 'NAK')):
                                     print('\tRecieved extra data from previously received packet. Resending ACK.')
-                                    self.network.udt_send(Packet(response.seq_num, 'ACK'))
+                                    self.network.udt_send(Packet(response.seq_num, 'ACK').get_byte_S())
                                 else:
                                     if(response.seq_num == self.oppositeSeq() and (response.msg_S == 'ACK')):
                                         print('\tRecieved duplicate ACK. Ignoring.')
