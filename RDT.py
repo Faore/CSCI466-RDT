@@ -165,16 +165,21 @@ class RDT:
                 # create packet from buffer content and add to return string
                 p = Packet.from_byte_S(self.byte_buffer[0:length])
                 #print(p.msg_S)
-                if p.seq_num == self.seq_num:
+                if p.seq_num == self.seq_num and p.msg_S != 'ACK' and p.msg_S != 'NAK':
                     ret_S = p.msg_S if (ret_S is None) else ret_S + p.msg_S
                 print("RECIEVER: Packet Recieved")
-                # remove the packet bytes from the buffer
-                self.byte_buffer = self.byte_buffer[length:]
-                ack = Packet(p.seq_num, 'ACK')
-                self.network.udt_send(ack.get_byte_S())
-                print("\tSent ACK" + repr(p.seq_num) + "\n")
-                self.swapSeq()
+                if p.msg_S != 'ACK' and p.msg_S != 'NAK':
+                    # remove the packet bytes from the buffer
+                    self.byte_buffer = self.byte_buffer[length:]
+                    ack = Packet(p.seq_num, 'ACK')
+                    self.network.udt_send(ack.get_byte_S())
+                    print("\tSent ACK" + repr(p.seq_num) + "\n")
+                    self.swapSeq()
+                else:
+                    #Not for me.
+                    return ret_S
                 # if this was the last packet, will return on the next iteration
+
                 
     def rdt_3_0_send(self, msg_S):
         pass
