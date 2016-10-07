@@ -94,46 +94,31 @@ class RDT:
             self.seq_num = 0
 
     def rdt_2_1_send(self, msg_S):
-        # Send the packet
-        p = Packet(self.seq_num, msg_S)
-        self.network.udt_send(p.get_byte_S())
-        print("SENDER: Sending Packet " + repr(self.seq_num))
-        #Wait for a response.
-        print("\tWaiting for response.")
-        while True:
-
-            # Keep adding to the buffer.
-            byte_S = self.network.udt_receive()
-            self.byte_buffer += byte_S
-            # check if we have received enough bytes
-            if (len(self.byte_buffer) >= Packet.length_S_length):
-                # extract length of packet
-                length = int(self.byte_buffer[:Packet.length_S_length])
-                if len(self.byte_buffer) >= length:
-                    # create packet from buffer content
-                    if Packet.corrupt(self.byte_buffer[0:length]):
-                        print("\tReceived corrupt packet. Resending.")
-                        self.network.udt_send(p.get_byte_S())
-                    else:
-                        response = Packet.from_byte_S(self.byte_buffer[0:length])
-                        # remove the packet bytes from the buffer
-                        self.byte_buffer = self.byte_buffer[length:]
-                        if (response.seq_num == self.seq_num and response.msg_S == 'ACK'):
-                            print("\tACK" + repr(response.seq_num) + " Recieved.\n")
-                            self.swapSeq()
-                            return
-                        else:
-                            if(response.seq_num == self.seq_num and response.msg_S == 'NAK'):
-                                print("\tGot NAK. Resending.")
-                                self.network.udt_send(p.get_byte_S())
-                            else:
-                                print("\tDidn't get an ACK")
+        # Keep adding to the buffer.
+        byte_S = self.network.udt_receive()
+        self.byte_buffer += byte_S
+        # check if we have received enough bytes
+        if (len(self.byte_buffer) >= Packet.length_S_length):
+            # extract length of packet
+            length = int(self.byte_buffer[:Packet.length_S_length])
+            if len(self.byte_buffer) >= length:
+                # create packet from buffer content
+                response = Packet.from_byte_S(self.byte_buffer[0:length])
+                # remove the packet bytes from the buffer
+                self.byte_buffer = self.byte_buffer[length:]
+                if (response.seq_num == self.seq_num and response.msg_S == 'ACK'):
+                    print("\tACK" + repr(response.seq_num) + " Recieved.\n")
+                    self.swapSeq()
+                    return
                 else:
-                    # not enough bytes to read the whole packet
+                    print("\tDidn't get an ACK")
                     pass
             else:
+                # not enough bytes to read the whole packet
                 pass
-                # not enough bytes to read packet length
+        else:
+            pass
+            # not enough bytes to read packet length
 
 
     def rdt_2_1_receive(self):
