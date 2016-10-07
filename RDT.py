@@ -95,7 +95,7 @@ class RDT:
             self.seq_num = 0
 
     def rdt_2_1_send(self, msg_S):
-        self.stopRecieve = False
+        stopReceive = False
         # Send the packet
         p = Packet(self.seq_num, msg_S)
         self.network.udt_send(p.get_byte_S())
@@ -179,7 +179,7 @@ class RDT:
                     self.swapSeq()
                 else:
                     #Not for me.
-                    self.stopRecieve = True
+                    self.stopReceive = True
                     return ret_S
                 # if this was the last packet, will return on the next iteration
 
