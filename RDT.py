@@ -164,7 +164,7 @@ class RDT:
             else:
                 # create packet from buffer content and add to return string
                 p = Packet.from_byte_S(self.byte_buffer[0:length])
-                print(p.msg_S)
+                #print(p.msg_S)
                 if p.seq_num == self.seq_num:
                     ret_S = p.msg_S if (ret_S is None) else ret_S + p.msg_S
                 print("RECIEVER: Packet Recieved")
