@@ -98,7 +98,7 @@ class RDT:
         p = Packet(self.seq_num, msg_S)
         self.network.udt_send(p.get_byte_S())
         print("SENDER: Sending Packet " + repr(self.seq_num))
-        # Wait for a response.
+        #Wait for a response.
         print("\tWaiting for response.")
         while True:
 
@@ -111,16 +111,23 @@ class RDT:
                 length = int(self.byte_buffer[:Packet.length_S_length])
                 if len(self.byte_buffer) >= length:
                     # create packet from buffer content
-                    response = Packet.from_byte_S(self.byte_buffer[0:length])
-                    # remove the packet bytes from the buffer
-                    self.byte_buffer = self.byte_buffer[length:]
-                    if (response.seq_num == self.seq_num and response.msg_S == 'ACK'):
-                        print("\tACK" + repr(response.seq_num) + " Recieved.\n")
-                        self.swapSeq()
-                        return
+                    if Packet.corrupt(self.byte_buffer[0:length]):
+                        print("\tReceived corrupt packet. Resending.")
+                        self.network.udt_send(p.get_byte_S())
                     else:
-                        print("\tDidn't get an ACK")
-                        pass
+                        response = Packet.from_byte_S(self.byte_buffer[0:length])
+                        # remove the packet bytes from the buffer
+                        self.byte_buffer = self.byte_buffer[length:]
+                        if (response.seq_num == self.seq_num and response.msg_S == 'ACK'):
+                            print("\tACK" + repr(response.seq_num) + " Recieved.\n")
+                            self.swapSeq()
+                            return
+                        else:
+                            if(response.seq_num == self.seq_num and response.msg_S == 'NAK'):
+                                print("\tGot NAK. Resending.")
+                                self.network.udt_send(p.get_byte_S())
+                            else:
+                                print("\tDidn't get an ACK")
                 else:
                     # not enough bytes to read the whole packet
                     pass
