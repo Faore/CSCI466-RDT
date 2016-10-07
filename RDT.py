@@ -93,12 +93,6 @@ class RDT:
         else:
             self.seq_num = 0
 
-    def oppositeSeq(self):
-        if self.seq_num == 1:
-            return 0
-        else:
-            return 1
-
     def rdt_2_1_send(self, msg_S):
         # Send the packet
         p = Packet(self.seq_num, msg_S)
@@ -116,25 +110,24 @@ class RDT:
                 # extract length of packet
                 length = int(self.byte_buffer[:Packet.length_S_length])
                 if len(self.byte_buffer) >= length:
-                    # check if corrupt packet
-                    if(Packet.corrupt(self.byte_buffer[0:length])):
-                        print("\tRecieved corrupt ACK or NAK. Removing from buffer and Resending P" + repr(self.seq_num))
-                        self.byte_buffer = self.byte_buffer[length:]
+                    # create packet from buffer content
+                    if Packet.corrupt(self.byte_buffer[0:length]):
+                        print("\tReceived corrupt packet. Resending.")
                         self.network.udt_send(p.get_byte_S())
                     else:
-                        # create packet from buffer content
                         response = Packet.from_byte_S(self.byte_buffer[0:length])
                         # remove the packet bytes from the buffer
                         self.byte_buffer = self.byte_buffer[length:]
-                        # Check if ack.
                         if (response.seq_num == self.seq_num and response.msg_S == 'ACK'):
                             print("\tACK" + repr(response.seq_num) + " Recieved.\n")
                             self.swapSeq()
                             return
                         else:
                             if(response.seq_num == self.seq_num and response.msg_S == 'NAK'):
-                                print("\tRecieved NAK" + repr(response.seq_num))
+                                print("\tGot NAK. Resending.")
                                 self.network.udt_send(p.get_byte_S())
+                            else:
+                                print("\tDidn't get an ACK")
                 else:
                     # not enough bytes to read the whole packet
                     pass
@@ -157,23 +150,15 @@ class RDT:
             if len(self.byte_buffer) < length:
                 return ret_S  # not enough bytes to read the whole packet
             # create packet from buffer content and add to return string
-            if(Packet.corrupt((self.byte_buffer[0:length]))):
-                nak = Packet(self.seq_num, 'NAK')
-                self.network.udt_send(nak.get_byte_S())
-                # remove the packet bytes from the buffer
-                self.byte_buffer = self.byte_buffer[length:]
-                print("\tSent NAK\n")
-            else:
-                p = Packet.from_byte_S(self.byte_buffer[0:length])
-                self.byte_buffer = self.byte_buffer[length:]
-                if p.seq_num == self.seq_num and p.msg_S != 'ACK' and p.msg_S != 'NAK':
-                    print("RECEIVER: Packet " + repr(p.seq_num) + " Recieved")
-                    ret_S = p.msg_S if (ret_S is None) else ret_S + p.msg_S
-                    # remove the packet bytes from the buffer
-                    ack = Packet(p.seq_num, 'ACK')
-                    self.network.udt_send(ack.get_byte_S())
-                    print("\tSent ACK" + repr(self.seq_num) + "\n")
-                    # if this was the last packet, will return on the next iteration
+            p = Packet.from_byte_S(self.byte_buffer[0:length])
+            ret_S = p.msg_S if (ret_S is None) else ret_S + p.msg_S
+            print("RECIEVER: Packet Recieved")
+            # remove the packet bytes from the buffer
+            self.byte_buffer = self.byte_buffer[length:]
+            ack = Packet(p.seq_num, 'ACK')
+            self.network.udt_send(ack.get_byte_S())
+            print("\tSent ACK" + repr(self.seq_num) + "\n")
+            # if this was the last packet, will return on the next iteration
 
     def rdt_3_0_send(self, msg_S):
         pass
