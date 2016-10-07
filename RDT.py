@@ -151,7 +151,7 @@ class RDT:
                 return ret_S  # not enough bytes to read the whole packet
             if(Packet.corrupt(self.byte_buffer[0:length])):
                 self.byte_buffer = self.byte_buffer[length:]
-                nak = Packet(p.seq_num, 'NAK')
+                nak = Packet(self.seq_num, 'NAK')
                 self.network.udt_send(nak.get_byte_S())
                 print("\tSent NAK\n")
             else:
