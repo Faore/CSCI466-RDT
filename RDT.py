@@ -110,31 +110,27 @@ class RDT:
                 # extract length of packet
                 length = int(self.byte_buffer[:Packet.length_S_length])
                 if len(self.byte_buffer) >= length:
-                    corrupt = False
-                    try:
-                        response = Packet.from_byte_S(self.byte_buffer[0:length])
-                    except:
-                        corrupt = True
-                    self.byte_buffer = self.byte_buffer[length:]
-                    # create packet from buffer content
-                    if corrupt:
-                        print("\tReceived corrupt packet. Resending.")
+                    # check if corrupt packet
+                    if(Packet.corrupt(self.byte_buffer[0:length])):
+                        print("\tRecieved corrupt ACK or NAK. Removing from buffer and Resending P" + repr(self.seq_num))
+                        self.byte_buffer = self.byte_buffer[length:]
                         self.network.udt_send(p.get_byte_S())
                     else:
+                        # create packet from buffer content
+                        response = Packet.from_byte_S(self.byte_buffer[0:length])
                         # remove the packet bytes from the buffer
                         self.byte_buffer = self.byte_buffer[length:]
+                        # Check if ack.
                         if (response.seq_num == self.seq_num and response.msg_S == 'ACK'):
                             print("\tACK" + repr(response.seq_num) + " Recieved.\n")
                             self.swapSeq()
                             return
                         else:
                             if(response.seq_num == self.seq_num and response.msg_S == 'NAK'):
-                                print("\tGot NAK. Resending.")
+                                print("\tRecieved NAK" + repr(response.seq_num))
                                 self.network.udt_send(p.get_byte_S())
                             else:
-                                print("\tGot a message. Resending ACK.")
-                                self.network.udt_send(Packet(response.seq_num, 'ACK').get_byte_S())
-
+                                print("\tDidn't get an ACK or NAK.")
                 else:
                     # not enough bytes to read the whole packet
                     pass
@@ -156,27 +152,28 @@ class RDT:
             length = int(self.byte_buffer[:Packet.length_S_length])
             if len(self.byte_buffer) < length:
                 return ret_S  # not enough bytes to read the whole packet
-            if(Packet.corrupt(self.byte_buffer[0:length])):
-                self.byte_buffer = self.byte_buffer[length:]
+            # create packet from buffer content and add to return string
+            if(Packet.corrupt((self.byte_buffer[0:length]))):
                 nak = Packet(self.seq_num, 'NAK')
                 self.network.udt_send(nak.get_byte_S())
+                # remove the packet bytes from the buffer
+                self.byte_buffer = self.byte_buffer[length:]
                 print("\tSent NAK\n")
             else:
-                # create packet from buffer content and add to return string
                 p = Packet.from_byte_S(self.byte_buffer[0:length])
-                #print(p.msg_S)
                 if p.seq_num == self.seq_num:
                     ret_S = p.msg_S if (ret_S is None) else ret_S + p.msg_S
-                print("RECIEVER: Packet Recieved")
+                    self.swapSeq()
+                    print("RECEIVER: Packet Received.")
+                else:
+                    print("RECEIVER: Duplicate packet received.")
                 # remove the packet bytes from the buffer
                 self.byte_buffer = self.byte_buffer[length:]
                 ack = Packet(p.seq_num, 'ACK')
                 self.network.udt_send(ack.get_byte_S())
                 print("\tSent ACK" + repr(p.seq_num) + "\n")
-                self.swapSeq()
                 # if this was the last packet, will return on the next iteration
 
-                
     def rdt_3_0_send(self, msg_S):
         pass
         
