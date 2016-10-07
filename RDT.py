@@ -113,6 +113,7 @@ class RDT:
                     # create packet from buffer content
                     if Packet.corrupt(self.byte_buffer[0:length]):
                         print("\tReceived corrupt packet. Resending.")
+                        self.byte_buffer = self.byte_buffer[length:]
                         self.network.udt_send(p.get_byte_S())
                     else:
                         response = Packet.from_byte_S(self.byte_buffer[0:length])
