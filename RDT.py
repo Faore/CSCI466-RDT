@@ -110,9 +110,9 @@ class RDT:
                 # extract length of packet
                 length = int(self.byte_buffer[:Packet.length_S_length])
                 if len(self.byte_buffer) >= length:
+                    corrupt = False
                     try:
                         response = Packet.from_byte_S(self.byte_buffer[0:length])
-                        corrupt = False
                     except:
                         corrupt = True
                     self.byte_buffer = self.byte_buffer[length:]
@@ -121,7 +121,6 @@ class RDT:
                         print("\tReceived corrupt packet. Resending.")
                         self.network.udt_send(p.get_byte_S())
                     else:
-                        response = Packet.from_byte_S(self.byte_buffer[0:length])
                         # remove the packet bytes from the buffer
                         self.byte_buffer = self.byte_buffer[length:]
                         if (response.seq_num == self.seq_num and response.msg_S == 'ACK'):
