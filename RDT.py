@@ -55,7 +55,6 @@ class RDT:
     seq_num = 1
     ## buffer of bytes read from network
     byte_buffer = ''
-    stopReceive = False
 
     def __init__(self, role_S, server_S, port):
         self.network = Network.NetworkLayer(role_S, server_S, port)
@@ -95,7 +94,6 @@ class RDT:
             self.seq_num = 0
 
     def rdt_2_1_send(self, msg_S):
-        stopReceive = False
         # Send the packet
         p = Packet(self.seq_num, msg_S)
         self.network.udt_send(p.get_byte_S())
@@ -152,7 +150,7 @@ class RDT:
         # keep extracting packets - if reordered, could get more than one
         while True:
             # check if we have received enough bytes
-            if (len(self.byte_buffer) < Packet.length_S_length or self.stopReceive):
+            if (len(self.byte_buffer) < Packet.length_S_length):
                 return ret_S  # not enough bytes to read packet length
             # extract length of packet
             length = int(self.byte_buffer[:Packet.length_S_length])
@@ -167,20 +165,15 @@ class RDT:
                 # create packet from buffer content and add to return string
                 p = Packet.from_byte_S(self.byte_buffer[0:length])
                 #print(p.msg_S)
-                if p.seq_num == self.seq_num and p.msg_S != 'ACK' and p.msg_S != 'NAK':
+                if p.seq_num == self.seq_num:
                     ret_S = p.msg_S if (ret_S is None) else ret_S + p.msg_S
                 print("RECIEVER: Packet Recieved")
-                if p.msg_S != 'ACK' and p.msg_S != 'NAK':
-                    # remove the packet bytes from the buffer
-                    self.byte_buffer = self.byte_buffer[length:]
-                    ack = Packet(p.seq_num, 'ACK')
-                    self.network.udt_send(ack.get_byte_S())
-                    print("\tSent ACK" + repr(p.seq_num) + "\n")
-                    self.swapSeq()
-                else:
-                    #Not for me.
-                    self.stopReceive = True
-                    return ret_S
+                # remove the packet bytes from the buffer
+                self.byte_buffer = self.byte_buffer[length:]
+                ack = Packet(p.seq_num, 'ACK')
+                self.network.udt_send(ack.get_byte_S())
+                print("\tSent ACK" + repr(p.seq_num) + "\n")
+                self.swapSeq()
                 # if this was the last packet, will return on the next iteration
 
                 
