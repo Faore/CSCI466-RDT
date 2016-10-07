@@ -128,6 +128,8 @@ class RDT:
                                 self.network.udt_send(p.get_byte_S())
                             else:
                                 print("\tDidn't get an ACK")
+                                print(response.seq_num)
+                                print(response.msg_S)
                 else:
                     # not enough bytes to read the whole packet
                     pass
@@ -157,6 +159,7 @@ class RDT:
             else:
                 # create packet from buffer content and add to return string
                 p = Packet.from_byte_S(self.byte_buffer[0:length])
+                print(p.msg_S)
                 ret_S = p.msg_S if (ret_S is None) else ret_S + p.msg_S
                 print("RECIEVER: Packet Recieved")
                 # remove the packet bytes from the buffer
@@ -186,6 +189,7 @@ class RDT:
                                 self.network.udt_send(Packet(self.oppSeq, 'NAK').get_byte_S())
                             else:
                                 p2 = Packet.from_byte_S(self.byte_buffer[0:length])
+                                print(p2.msg_S)
                                 if p2.msg_S == p.msg_S:
                                     #duplicate, discard, resend ack.
                                     print("\tReceived duplicate. Resending ACK.")
