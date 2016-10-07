@@ -165,10 +165,18 @@ class RDT:
                 self.network.udt_send(ack.get_byte_S())
                 print("\tSent ACK" + repr(self.seq_num) + "\n")
                 # Wait to see if there is a duplicate so it can be discarded.
+                i = 0
                 while True:
+                    # Keep adding to the buffer.
+                    byte_S = self.network.udt_receive()
+                    self.byte_buffer += byte_S
+
                     if (len(self.byte_buffer) >= Packet.length_S_length):
                         # extract length of packet
                         length = int(self.byte_buffer[:Packet.length_S_length])
+                        i += 1
+                        if(i == 15000):
+                            break
                         if len(self.byte_buffer) >= length:
                             # create packet from buffer content
                             if Packet.corrupt(self.byte_buffer[0:length]):
