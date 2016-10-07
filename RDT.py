@@ -128,7 +128,7 @@ class RDT:
                                 self.network.udt_send(p.get_byte_S())
                             else:
                                 print("\tGot a message. Resending ACK.")
-                                self.network.udt_send(Packet(response.seq_num, 'ACK'))
+                                self.network.udt_send(Packet(response.seq_num, 'ACK').get_byte_S())
 
                 else:
                     # not enough bytes to read the whole packet
