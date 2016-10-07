@@ -192,7 +192,7 @@ class RDT:
                                     self.network.udt_send(ack.get_byte_S())
                                     i = 0
                                 else:
-                                    break
+                                    return ret_S
                 self.swapSeq()
 
 
