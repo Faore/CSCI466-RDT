@@ -175,7 +175,7 @@ class RDT:
                         # extract length of packet
                         length = int(self.byte_buffer[:Packet.length_S_length])
                         i += 1
-                        if(i == 10000):
+                        if(i == 1000):
                             break
                         if len(self.byte_buffer) >= length:
                             # create packet from buffer content
@@ -190,6 +190,7 @@ class RDT:
                                     print("\tReceived duplicate. Resending ACK.")
                                     self.byte_buffer = self.byte_buffer[length:]
                                     self.network.udt_send(ack.get_byte_S())
+                                    i = 0
                                 else:
                                     break
 
