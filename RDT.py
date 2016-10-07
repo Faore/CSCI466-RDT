@@ -177,7 +177,7 @@ class RDT:
                         length = int(self.byte_buffer[:Packet.length_S_length])
                         i += 1
                         if(i == 1000):
-                            break
+                            return ret_S
                         if len(self.byte_buffer) >= length:
                             # create packet from buffer content
                             if Packet.corrupt(self.byte_buffer[0:length]):
