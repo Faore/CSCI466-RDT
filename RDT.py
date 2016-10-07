@@ -193,6 +193,7 @@ class RDT:
                                     i = 0
                                 else:
                                     break
+                self.swapSeq()
 
 
                 # if this was the last packet, will return on the next iteration
