@@ -172,7 +172,7 @@ class RDT:
                 self.byte_buffer = self.byte_buffer[length:]
                 ack = Packet(p.seq_num, 'ACK')
                 self.network.udt_send(ack.get_byte_S())
-                print("\tSent ACK" + repr(self.seq_num) + "\n")
+                print("\tSent ACK" + repr(p.seq_num) + "\n")
                 self.swapSeq()
                 # if this was the last packet, will return on the next iteration
                 
