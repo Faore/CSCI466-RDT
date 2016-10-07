@@ -55,6 +55,7 @@ class RDT:
     seq_num = 1
     ## buffer of bytes read from network
     byte_buffer = ''
+    stopReceive = False
 
     def __init__(self, role_S, server_S, port):
         self.network = Network.NetworkLayer(role_S, server_S, port)
