@@ -152,7 +152,7 @@ class RDT:
         # keep extracting packets - if reordered, could get more than one
         while True:
             # check if we have received enough bytes
-            if (len(self.byte_buffer) < Packet.length_S_length or self.stopRecieve):
+            if (len(self.byte_buffer) < Packet.length_S_length or self.stopReceive):
                 return ret_S  # not enough bytes to read packet length
             # extract length of packet
             length = int(self.byte_buffer[:Packet.length_S_length])
