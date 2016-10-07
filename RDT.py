@@ -175,18 +175,19 @@ class RDT:
                         # extract length of packet
                         length = int(self.byte_buffer[:Packet.length_S_length])
                         i += 1
-                        if(i == 15000):
+                        if(i == 10000):
                             break
                         if len(self.byte_buffer) >= length:
                             # create packet from buffer content
                             if Packet.corrupt(self.byte_buffer[0:length]):
-                                print("\tReceived corrupt packet. Resending.")
+                                print("\tReceived corrupt packet. Sending NAK.")
+                                self.byte_buffer = self.byte_buffer[length:]
                                 self.network.udt_send(Packet(self.oppSeq, 'NAK').get_byte_S())
                             else:
                                 p2 = Packet.from_byte_S(self.byte_buffer[0:length])
                                 if p2.msg_S == p.msg_S:
                                     #duplicate, discard, resend ack.
-                                    print("\tReceived duplicate. Resending.")
+                                    print("\tReceived duplicate. Resending ACK.")
                                     self.byte_buffer = self.byte_buffer[length:]
                                     self.network.udt_send(ack.get_byte_S())
                                 else:
