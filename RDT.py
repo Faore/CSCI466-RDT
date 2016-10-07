@@ -135,15 +135,6 @@ class RDT:
                             if(response.seq_num == self.seq_num and response.msg_S == 'NAK'):
                                 print("\tRecieved NAK" + repr(response.seq_num))
                                 self.network.udt_send(p.get_byte_S())
-                            else:
-                                if(response.seq_num == self.oppositeSeq() and (response.msg_S != 'ACK' and response.msg_S != 'NAK')):
-                                    print('\tRecieved extra data from previously received packet. Resending ACK.')
-                                    self.network.udt_send(Packet(response.seq_num, 'ACK').get_byte_S())
-                                else:
-                                    if(response.seq_num == self.oppositeSeq() and (response.msg_S == 'ACK')):
-                                        print('\tRecieved duplicate ACK. Ignoring.')
-                                    else:
-                                        print('\tRecieved previous NAK. I dunno what to do anymore.')
                 else:
                     # not enough bytes to read the whole packet
                     pass
@@ -182,18 +173,6 @@ class RDT:
                     ack = Packet(p.seq_num, 'ACK')
                     self.network.udt_send(ack.get_byte_S())
                     print("\tSent ACK" + repr(self.seq_num) + "\n")
-                else:
-                    if p.seq_num == self.oppositeSeq() and p.msg_S == 'ACK':
-                        print('\tReceived a previous ACK' + repr(p.seq_num) + '. Ignoring.')
-                    else:
-                        if p.seq_num == self.seq_num and p.msg_S == 'ACK':
-                            print('\tReceived a out-of-sync ACK' + repr(p.seq_num) + '. I dunno what to do.')
-                        else:
-                            if p.seq_num == self.seq_num and p.msg_S == 'NAK':
-                                print('\tReceived a out-of-sync ACK' + repr(p.seq_num) + '. I dunno what to do.')
-                            else:
-                                print('\tReceived a previous NAK' + repr(p.seq_num) + '. I dunno what to do.')
-
                     # if this was the last packet, will return on the next iteration
 
     def rdt_3_0_send(self, msg_S):
