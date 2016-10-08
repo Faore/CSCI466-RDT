@@ -21,7 +21,7 @@ class NetworkLayer:
     lock = threading.Lock()
     collect_thread = None
     stop = None
-    socket_timeout = 0.5
+    socket_timeout = 0.1
     reorder_msg_S = None
     
     def __init__(self, role_S, server_S, port):

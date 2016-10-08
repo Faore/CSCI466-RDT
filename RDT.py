@@ -230,7 +230,7 @@ class RDT:
             else:
                 timeout += 1
                 # not enough bytes to read packet length
-            if timeout >= 50000:
+            if timeout >= 10000:
                 # Resend if timeout.
                 self.network.udt_send(p.get_byte_S())
                 #print('\tTimeout. Resending Packet.')
