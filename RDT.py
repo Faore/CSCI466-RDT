@@ -112,7 +112,7 @@ class RDT:
                 if len(self.byte_buffer) >= length:
                     # check if corrupt packet
                     if(Packet.corrupt(self.byte_buffer[0:length])):
-                        print("\tRecieved corrupt ACK or NAK. Removing from buffer and Resending P" + repr(self.seq_num))
+                        #print("\tRecieved corrupt ACK or NAK. Removing from buffer and Resending P" + repr(self.seq_num))
                         self.byte_buffer = self.byte_buffer[length:]
                         self.network.udt_send(p.get_byte_S())
                     else:
@@ -122,12 +122,12 @@ class RDT:
                         self.byte_buffer = self.byte_buffer[length:]
                         # Check if ack.
                         if (response.seq_num == self.seq_num and response.msg_S == 'ACK'):
-                            print("\tACK" + repr(response.seq_num) + " Recieved.\n")
+                            #print("\tACK" + repr(response.seq_num) + " Recieved.\n")
                             self.swapSeq()
                             return
                         else:
                             if(response.seq_num == self.seq_num and response.msg_S == 'NAK'):
-                                print("\tRecieved NAK" + repr(response.seq_num))
+                                #print("\tRecieved NAK" + repr(response.seq_num))
                                 self.network.udt_send(p.get_byte_S())
                             else:
                                 if response.seq_num != self.seq_num and (
@@ -163,15 +163,15 @@ class RDT:
                 self.network.udt_send(nak.get_byte_S())
                 # remove the packet bytes from the buffer
                 self.byte_buffer = self.byte_buffer[length:]
-                print("\tSent NAK\n")
+                #print("\tSent NAK\n")
             else:
                 p = Packet.from_byte_S(self.byte_buffer[0:length])
                 if p.seq_num == self.seq_num:
                     ret_S = p.msg_S if (ret_S is None) else ret_S + p.msg_S
                     self.swapSeq()
-                    print("RECEIVER: Packet Received.")
+                    #print("RECEIVER: Packet Received.")
                 else:
-                    print("RECEIVER: Duplicate packet received.")
+                    #print("RECEIVER: Duplicate packet received.")
                 # remove the packet bytes from the buffer
                 self.byte_buffer = self.byte_buffer[length:]
                 ack = Packet(p.seq_num, 'ACK')
@@ -183,9 +183,9 @@ class RDT:
         # Send the packet
         p = Packet(self.seq_num, msg_S)
         self.network.udt_send(p.get_byte_S())
-        print("SENDER: Sending Packet " + repr(self.seq_num))
+        #print("SENDER: Sending Packet " + repr(self.seq_num))
         # Wait for a response.
-        print("\tWaiting for response.")
+        #print("\tWaiting for response.")
         timeout = 0
         while True:
             # Keep adding to the buffer.
@@ -198,7 +198,7 @@ class RDT:
                 if len(self.byte_buffer) >= length:
                     # check if corrupt packet
                     if (Packet.corrupt(self.byte_buffer[0:length])):
-                        print("\tRecieved corrupt ACK or NAK. Removing from buffer and Resending P" + repr(self.seq_num))
+                        #print("\tRecieved corrupt ACK or NAK. Removing from buffer and Resending P" + repr(self.seq_num))
                         self.byte_buffer = self.byte_buffer[length:]
                         self.network.udt_send(p.get_byte_S())
                         timeout = 0
@@ -209,12 +209,12 @@ class RDT:
                         self.byte_buffer = self.byte_buffer[length:]
                         # Check if ack.
                         if (response.seq_num == self.seq_num and response.msg_S == 'ACK'):
-                            print("\tACK" + repr(response.seq_num) + " Recieved.\n")
+                            #print("\tACK" + repr(response.seq_num) + " Recieved.\n")
                             self.swapSeq()
                             return
                         else:
                             if (response.seq_num == self.seq_num and response.msg_S == 'NAK'):
-                                print("\tRecieved NAK" + repr(response.seq_num))
+                                #print("\tRecieved NAK" + repr(response.seq_num))
                                 self.network.udt_send(p.get_byte_S())
                                 timeout = 0
                             else:
@@ -229,7 +229,7 @@ class RDT:
             else:
                 timeout += 1
                 # not enough bytes to read packet length
-            if timeout >= 10000:
+            if timeout >= 50000:
                 # Resend if timeout.
                 self.network.udt_send(p.get_byte_S())
                 #print('\tTimeout. Resending Packet.')
@@ -252,20 +252,21 @@ class RDT:
                 self.network.udt_send(nak.get_byte_S())
                 # remove the packet bytes from the buffer
                 self.byte_buffer = self.byte_buffer[length:]
-                print("\tSent NAK\n")
+                #print("\tSent NAK\n")
             else:
                 p = Packet.from_byte_S(self.byte_buffer[0:length])
                 if p.seq_num == self.seq_num:
                     ret_S = p.msg_S if (ret_S is None) else ret_S + p.msg_S
                     self.swapSeq()
-                    print("RECEIVER: Packet Received.")
+                    #print("RECEIVER: Packet Received.")
                 else:
-                    print("RECEIVER: Duplicate packet received.")
+                    #print("RECEIVER: Duplicate packet received.")
+                    pass
                 # remove the packet bytes from the buffer
                 self.byte_buffer = self.byte_buffer[length:]
                 ack = Packet(p.seq_num, 'ACK')
                 self.network.udt_send(ack.get_byte_S())
-                print("\tSent ACK" + repr(p.seq_num) + "\n")
+                #print("\tSent ACK" + repr(p.seq_num) + "\n")
                 # if this was the last packet, will return on the next iteration
         
 
