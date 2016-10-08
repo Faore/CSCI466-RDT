@@ -172,6 +172,7 @@ class RDT:
                     #print("RECEIVER: Packet Received.")
                 else:
                     #print("RECEIVER: Duplicate packet received.")
+                    pass
                 # remove the packet bytes from the buffer
                 self.byte_buffer = self.byte_buffer[length:]
                 ack = Packet(p.seq_num, 'ACK')
